@@ -1,5 +1,9 @@
 import React, { useState } from "react";
 import axios from "axios";
+import { ToastContainer } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
+import { toast } from 'react-toastify'
+
 
 const App = () => {
   const [file, setFile] = useState(null);
@@ -13,23 +17,39 @@ const App = () => {
   };
 
   const handleUpload = async () => {
-    const formData = new FormData();
-    formData.append("file", file);
-    const res = await axios.post("http://localhost:4000/api/convert", formData);
-    const generatedCode = res.data.code;
-    setCanvasCode(generatedCode);
+  if (!file) {
+    toast.error("Please select a file first.");
+    return;
+  }
 
-    try {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  try {
+    const res = await axios.post("http://localhost:4000/api/convert", formData);
+
+    if (res.data.success) {
+      const generatedCode = res.data.code;
+      setCanvasCode(generatedCode);
+
       const runCode = new Function(generatedCode);
       runCode();
-    } catch (err) {
-      console.error("Error executing canvas code:", err);
+
+      toast.success("Canvas rendered successfully!");
+    } else {
+      toast.error(res.data.message || "Conversion failed.");
     }
-  };
+  } catch (err) {
+    console.error("Error:", err);
+    toast.error("Something went wrong during upload.");
+  }
+};
+
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      <h1 className="text-3xl font-bold text-center text-blue-500 mb-8">
+    <div className="min-h-screen bg-black text-white mt-4">
+      <ToastContainer position="top-right" autoClose={3000} pauseOnHover theme="colored"/>
+      <h1 className="text-3xl font-bold text-center text-blue-500 mb-14">
         Welcome to Canvas Converter
       </h1>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-6xl mx-auto">
